@@ -149,7 +149,35 @@ http://127.0.0.1:8000/dashboard-page
 ```text
 http://127.0.0.1:8000/docs
 ```
+## Jeu de données de démonstration
 
+Afin de permettre de tester l'application sans utiliser de données
+opérationnelles réelles, un jeu de données entièrement synthétique est
+fourni avec le projet.
+
+Le fichier est disponible dans :
+
+`demo/jeu_donnees_tfe_multifeuilles_quartiers.xlsx`
+
+Ce classeur contient plusieurs feuilles présentant volontairement des
+structures différentes :
+
+- `Faits_2024` : données fictives pour l'année 2024 ;
+- `Faits_2025` : données fictives avec une structure légèrement différente ;
+- `Faits_2026` : données fictives sans mesure numérique explicite ;
+- `Incidents_test` : données synthétiques permettant de tester d'autres types de colonnes ;
+- `Cas_limites` : valeurs manquantes, doublons, valeur atypique et zone volontairement inconnue ;
+- `Referentiel_quartiers` : référentiel géographique utilisé pour les tests cartographiques ;
+- `Lisez_moi` : description du contenu du classeur.
+
+Les noms des quartiers utilisés dans le jeu de démonstration correspondent
+au référentiel géographique de test afin de permettre la génération de la
+carte.
+
+> **Important :** toutes les données contenues dans ce fichier sont
+> synthétiques et ont été créées uniquement à des fins de test et de
+> démonstration. Aucune donnée policière opérationnelle ou donnée
+> personnelle réelle n'est publiée dans ce dépôt.
 ---
 
 ## Utilisation
@@ -165,6 +193,18 @@ Le fonctionnement général de l'application est le suivant :
 7. Une analyse personnalisée peut également être réalisée.
 8. Un référentiel géographique peut être importé pour activer la représentation cartographique lorsque les données sont compatibles.
 
+### Test rapide avec les données de démonstration
+
+Pour tester l'application :
+
+1. Lancer le serveur avec `uvicorn main:app --reload`.
+2. Ouvrir `http://127.0.0.1:8000/dashboard-page`.
+3. Importer `demo/jeu_donnees_tfe_multifeuilles_quartiers.xlsx`.
+4. Sélectionner l'une des feuilles de données.
+5. Lancer l'analyse automatique.
+6. Tester les graphiques et les indicateurs générés.
+7. Pour la cartographie, utiliser la feuille `Referentiel_quartiers`
+   comme référentiel géographique.
 ---
 
 ## Tests
