@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Dashboard d’analyse</title>
+
+    <!-- Graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Carte Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    >
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Feuille de style du projet -->
+    <link
+        rel="stylesheet"
+        href="/static/css/style.css"
+    >
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+    <header class="header">
+
+        <div>
+            <h1>Dashboard d’analyse de données</h1>
+
+            <p>
+                    Analyse, visualisation et cartographie dynamique de données Excel.
+            </p>
+        </div>
+
+    </header>
+
+    <div class="card dashboard-help" style="margin-top: 20px;">
+        <h3>Comment utiliser le dashboard ?</h3>
+
+        <p>
+            <strong>1.</strong> Importez votre fichier Excel.
+        </p>
+
+        <p>
+            <strong>2.</strong> Sélectionnez la feuille à analyser.
+        </p>
+
+        <p>
+            <strong>3.</strong> Cliquez sur « Lancer l’analyse automatique » pour générer les résultats.
+        </p>
+
+        <p>
+            L’application détectera automatiquement
+            les colonnes, les statistiques pertinentes
+            et les graphiques adaptés.
+        </p>
+    </div>
+
+
+    <!-- =====================================================
+         IMPORT DU FICHIER
+    ====================================================== -->
+    <section class="card import-card">
+
+        <div class="section-header">
+            <div>
+                <h2>Importer un fichier Excel</h2>
+
+                <p>
+                    Le fichier doit être au format
+                    <strong>.xlsx</strong>.
+                </p>
+            </div>
+        </div>
+
+        <div class="upload-row">
+
+            <input
+                type="file"
+                id="excelFile"
+                accept=".xlsx"
+            >
+
+            <button
+                type="button"
+                id="uploadBtn"
+            >
+                Importer
+            </button>
+
+        </div>
+
+        <p
+            id="uploadMessage"
+            class="status-message"
+        ></p>
+
+    </section>
+
+    <div id="dashboardContent" style="display: none;">
+        <!-- =====================================================
+             CHOIX DE LA FEUILLE
+        ====================================================== -->
+        <section class="card">
+
+            <div class="section-header">
+                <div>
+                    <h2>Feuille Excel</h2>
+
+                    <p>
+                        Sélectionnez la feuille que vous souhaitez analyser.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+
+                <label for="sheetSelect">
+                    Feuille sélectionnée
+                </label>
+
+                <select id="sheetSelect"></select>
+
+            </div>
+
+        </section>
+
+        <!-- =====================================================
+             Résumé des données
+        ====================================================== -->
+
+        <section
+            id="sheetSummarySection"
+            class="card"
+            style="display: none;"
+        >
+
+            <div class="section-header">
+                <div>
+                    <h2>Résumé des données</h2>
+
+                    <p>
+                        Informations détectées automatiquement
+                        dans la feuille sélectionnée.
+                    </p>
+                </div>
+            </div>
+
+            <div class="kpis">
+
+                <div class="card">
+                    <h3>Enregistrements</h3>
+                    <div
+                        id="summaryRows"
+                        class="kpi-value"
+                    >
+                        0
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Colonnes</h3>
+                    <div
+                        id="summaryColumns"
+                        class="kpi-value"
+                    >
+                        0
+                    </div>
+                </div>
+
+            </div>
+
+            <div
+                id="sheetCapabilities"
+                class="data-capabilities"
+            >
+            </div>
+
+            <div
+                id="sheetReadyStatus"
+                class="sheet-ready-status"
+            >
+                ✓ Feuille prête pour l’analyse
+            </div>
+
+        </section>
+
+        <!-- =====================================================
+             IMPORT DU RÉFÉRENTIEL GÉOGRAPHIQUE
+        ====================================================== -->
+
+        <section class="card">
+
+            <div class="section-header">
+                <div>
+                    <h2>Référentiel géographique <span class="optional-label">Optionnel</span></h2>
+
+                    <p>
+                        Importez un référentiel géographique uniquement si vous
+                        souhaitez représenter vos données par zone sur la carte.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+
+                <label for="geoFile">
+                    Fichier géographique (.xlsx)
+                </label>
+
+                <input
+                    type="file"
+                    id="geoFile"
+                    accept=".xlsx"
+                >
+
+            </div>
+
+            <button
+                type="button"
+                id="geoUploadBtn"
+            >
+                Importer le référentiel
+            </button>
+
+            <p
+                id="geoUploadMessage"
+                class="status-message"
+            >
+                Aucun référentiel géographique importé.
+            </p>
+
+            <div
+                id="geoMappingOptions"
+                class="form-group"
+                style="display: none;"
+            >
+                <label for="geoDataColumn">
+                    Colonne géographique du fichier de données
+                </label>
+
+                <select id="geoDataColumn">
+                    <option value="">
+                        Sélectionnez une colonne
+                    </option>
+                </select>
+
+                <div
+                    id="geoCompatibilityMessage"
+                    class="geo-compatibility-message"
+                    style="display: none;"
+                ></div>
+
+                <p class="helper-text">
+                    Choisissez la colonne contenant les zones
+                    correspondant à « zone_label » du référentiel.
+                </p>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ANALYSE PERSONNALISÉE
+        ====================================================== -->
+
+        <section class="section-block">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Analyse personnalisée</h2>
+
+                    <p>
+                        Choisissez manuellement les colonnes et le type
+                        de graphique pour réaliser une analyse spécifique.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    id="toggleManualAnalysis"
+                >
+                    Analyse personnalisée.
+                </button>
+
+            </div>
+
+
+            <div
+                id="manualAnalysisSection"
+                style="display: none;"
+            >
+
+                <!-- =============================================
+                     PARAMÈTRES
+                ============================================== -->
+
+                <div class="filters">
+
+                    <div class="card">
+
+                        <label for="categorySelect">
+                            Colonne à analyser
+                        </label>
+
+                        <select id="categorySelect"></select>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <label for="valueSelect">
+                            Valeur numérique
+                        </label>
+
+                        <select id="valueSelect">
+
+                            <option value="">
+                                Compter les lignes
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <label for="chartType">
+                            Type de graphique
+                        </label>
+
+                        <select id="chartType">
+
+                            <option value="bar">
+                                Barres
+                            </option>
+
+                            <option value="pie">
+                                Camembert
+                            </option>
+
+                            <option value="doughnut">
+                                Anneau
+                            </option>
+
+                            <option value="line">
+                                Courbe
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     KPI DE L'ANALYSE PERSONNALISÉE
+                ============================================== -->
+
+                <div class="section-header manual-kpi-header">
+
+                    <div>
+                        <h3>Résultats principaux</h3>
+
+                        <p>
+                            Ces valeurs sont recalculées selon
+                            les paramètres sélectionnés.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="kpis">
+
+                    <article class="card kpi-card">
+
+                        <h3>Nombre d’enregistrements</h3>
+
+                        <div
+                            class="kpi-value"
+                            id="kpiRecords"
+                        >
+                            0
+                        </div>
+
+                    </article>
+
+
+                    <article class="card kpi-card">
+
+                        <h3>Valeur totale</h3>
+
+                        <div
+                            class="kpi-value"
+                            id="kpiTotal"
+                        >
+                            0
+                        </div>
+
+                    </article>
+
+
+                    <article class="card kpi-card">
+
+                        <h3>Nombre de catégories</h3>
+
+                        <div
+                            class="kpi-value"
+                            id="kpiCategories"
+                        >
+                            0
+                        </div>
+
+                    </article>
+
+
+                    <article class="card kpi-card">
+
+                        <h3>Catégorie dominante</h3>
+
+                        <div
+                            class="kpi-value kpi-text"
+                            id="kpiTop"
+                        >
+                            -
+                        </div>
+
+                    </article>
+
+                </div>
+
+            </div>
+
+        </section>
+
+         <!-- =====================================================
+             VISUALISATIONS
+        ====================================================== -->
+        <section id="manualVisualizations" class="manual-visualizations" style="display: none;">
+
+            <!-- Graphique -->
+            <div class="card visualization-card manual-chart-card">
+
+                <div class="section-header">
+                    <div>
+                        <h2>Graphique personnalisé</h2>
+
+                        <p>
+                            Visualisation générée selon les paramètres
+                            sélectionnés dans l’analyse personnalisée.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="manual-chart-wrapper">
+                    <canvas id="myChart"></canvas>
+                </div>
+
+            </div>
+
+            <!-- Carte -->
+            <div class="card visualization-card">
+
+                <div class="section-header">
+                    <div>
+                        <h2>Cartographie</h2>
+
+                        <p>
+                            Visualisez les données géographiques à partir
+                            des coordonnées ou du référentiel importé
+                        </p>
+                    </div>
+                </div>
+
+                <div class="map-settings">
+
+                    <div class="form-group">
+
+                        <label for="latitudeSelect">
+                            Colonne latitude
+                        </label>
+
+                        <select id="latitudeSelect">
+
+                            <option value="">
+                                Sélectionner
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="longitudeSelect">
+                            Colonne longitude
+                        </label>
+
+                        <select id="longitudeSelect">
+
+                            <option value="">
+                                Sélectionner
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="mapLabelSelect">
+                            Libellé du point
+                        </label>
+
+                        <select id="mapLabelSelect">
+
+                            <option value="">
+                                Libellé générique
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <p
+                    id="mapMessage"
+                    class="status-message"
+                >
+                    Sélectionnez les colonnes latitude et longitude.
+                </p>
+
+                <div id="map"></div>
+
+            </div>
+
+        </section>
+
+        <!-- =====================================================
+             TABLEAU DES RÉSULTATS
+        ====================================================== -->
+        <section id="manualResults" class="card table-card" style="display: none;">
+
+            <div class="section-header">
+                <div>
+                    <h2>Résultats détaillés</h2>
+
+                    <p>
+                        Consultez les valeurs utilisées pour générer l’analyse personnalisée.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+
+                <table id="resultsTable">
+
+                    <thead>
+
+                    <tr>
+                        <th>Catégorie</th>
+                        <th>Valeur</th>
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="resultsTableBody">
+
+                    <tr>
+                        <td colspan="2">
+                            Aucune donnée affichée.
+                        </td>
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+        <!-- =====================================================
+             ANALYSE AUTOMATIQUE
+        ====================================================== -->
+
+        <section class="section-block">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Analyse automatique</h2>
+
+                    <p>
+                        Le système analyse automatiquement la feuille sélectionnée
+                        et génère les statistiques et visualisations pertinentes.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    id="autoAnalysisBtn"
+                >
+                    Lancer l’analyse automatique
+                </button>
+
+
+            </div>
+
+
+            <div
+                id="autoAnalysisContent"
+                class="auto-analysis-content"
+            >
+
+                <!-- Message -->
+                <p
+                    id="autoAnalysisMessage"
+                    class="status-message"
+                >
+                    Cliquez sur « Analyser automatiquement » pour lancer l’analyse.
+                </p>
+
+
+                <!-- Colonnes détectées -->
+                <div
+                    id="autoDetectedColumns"
+                    class="auto-detected"
+                    style="display: none;"
+                >
+
+                    <div class="card">
+
+                        <h3>Dimension détectée</h3>
+
+                        <div id="autoCategoryColumn">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <h3>Mesure détectée</h3>
+
+                        <div id="autoNumericColumn">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <h3>Colonne temporelle</h3>
+
+                        <div id="autoDateColumn">
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- KPI automatiques -->
+                <div
+                    id="autoKpis"
+                    class="kpis"
+                    style="display: none; margin-top: 20px;"
+                >
+
+                    <article class="card kpi-card">
+
+                        <h3>Enregistrements</h3>
+
+                        <div
+                            class="kpi-value"
+                            id="autoRecords"
+                        >
+                            0
+                        </div>
+
+                    </article>
+
+
+                    <article class="card kpi-card">
+
+                        <h3>Total</h3>
+
+                        <div
+                            class="kpi-value"
+                            id="autoTotal"
+                        >
+                            0
+                        </div>
+
+                    </article>
+
+
+                    <article class="card kpi-card">
+
+                        <h3>Catégories distinctes</h3>
+
+                        <div
+                            class="kpi-value"
+                            id="autoCategories"
+                        >
+                            0
+                        </div>
+
+                    </article>
+
+
+                    <article class="card kpi-card">
+
+                        <h3>Catégorie dominante</h3>
+
+                        <div
+                            class="kpi-value kpi-text"
+                            id="autoTopCategory"
+                        >
+                            -
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+                <!-- ==================================================
+                     GRAPHIQUES GÉNÉRÉS AUTOMATIQUEMENT
+                ================================================== -->
+
+                <div id="autoCharts" style="display: none;">
+
+                    <h2>Analyses statistiques automatiques</h2>
+
+                    <p>
+                        Les graphiques suivants sont sélectionnés
+                        automatiquement selon la pertinence des données.
+                    </p>
+
+                    <div
+                        id="autoChartsContainer"
+                        class="auto-charts-grid">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </div> <!-- dashboard -->
+</div> <!-- dashboardContent -->
+
+<footer class="app-footer">
+    <p>© 2026 Esther Mwiseneza Munezero — TFE IFOSUP Wavre</p>
+    <nav aria-label="Informations légales">
+        <a href="/conditions-utilisation">Conditions d’utilisation</a>
+        <span aria-hidden="true">·</span>
+        <a href="/mentions-legales">Mentions légales</a>
+    </nav>
+</footer>
+
+<!-- JavaScript du dashboard -->
+<script src="/static/js/chart.js"></script>
+
+</body>
+</html>
